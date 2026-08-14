@@ -216,3 +216,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ---- Project data ----
+# Raw CSVs are downloaded, not committed. Synthetic data is regenerable.
+data/raw/*
+data/interim/*
+data/synthetic/
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+
+# Generated figures (regenerable); keep the directory itself
+reports/figures/*
+!reports/figures/.gitkeep

@@ -78,15 +78,23 @@ def load_table(
 
     directory = Path(data_dir) if data_dir is not None else paths.RAW_DIR
     spec = TABLES[name]
-    path = directory / spec.filename
-    if not path.exists():
+
+    # Prefer parquet when it is there. It loads far faster than CSV and is
+    # small enough to live in git, which the raw studentVle.csv is not --
+    # see scripts/prepare_data.py.
+    parquet_path = directory / f"{Path(spec.filename).stem}.parquet"
+    csv_path = directory / spec.filename
+
+    if parquet_path.exists():
+        df = pd.read_parquet(parquet_path)
+    elif csv_path.exists():
+        df = pd.read_csv(csv_path)
+    else:
         raise FileNotFoundError(
-            f"{path} not found.\n"
-            "The raw CSVs are not in the repo (they are gitignored). "
+            f"Found neither {parquet_path.name} nor {csv_path.name} in {directory}.\n"
             "See README.md > Getting the data."
         )
 
-    df = pd.read_csv(path)
     _check(df, spec, strict_grain=strict_grain)
     return df
 
@@ -107,6 +115,10 @@ def load_all(
 
 
 def data_available(data_dir: Path | None = None) -> bool:
-    """True if all seven CSVs are present in ``data_dir`` (default data/raw)."""
+    """True if all seven tables are present in ``data_dir``, as CSV or parquet."""
     directory = Path(data_dir) if data_dir is not None else paths.RAW_DIR
-    return all((directory / s.filename).exists() for s in TABLES.values())
+    return all(
+        (directory / s.filename).exists()
+        or (directory / f"{Path(s.filename).stem}.parquet").exists()
+        for s in TABLES.values()
+    )

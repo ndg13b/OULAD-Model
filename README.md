@@ -9,6 +9,7 @@ and every script prints an explanation of what it is doing and why.
 
 | Document | What's in it |
 |---|---|
+| [**`docs/03-what-the-data-actually-is.md`**](docs/03-what-the-data-actually-is.md) | **Start here.** What the OU recorded, what we're building, and the one decision that determines whether it's useful. Assumes no ML background |
 | [`docs/00-project-design.md`](docs/00-project-design.md) | The question, the decisions, and the alternatives that were rejected |
 | [`docs/01-glossary.md`](docs/01-glossary.md) | Every term, defined. No jargon is used before it appears here |
 | [`docs/02-leakage.md`](docs/02-leakage.md) | The ways this dataset will fool you, and the rules that prevent it |
@@ -54,18 +55,33 @@ Download them yourself:
 - <https://analyse.kmi.open.ac.uk/open_dataset> (direct download), or
 - UCI ML Repository dataset 349: `pip install ucimlrepo`
 
-Unzip so that `data/raw/` contains all seven files:
+Then convert them to parquet:
+
+```bash
+python scripts/prepare_data.py --source ~/Downloads/oulad
+```
+
+**Why the conversion step.** `studentVle.csv` is ~10.7M rows and several hundred
+MB. GitHub rejects any file over 100 MB, so the CSVs cannot be committed as-is.
+Parquet stores data by column instead of by row and compresses it, which shrinks
+the clickstream by roughly 10x — small enough to commit, and faster to load.
+`oulad.load` prefers parquet automatically, so nothing else changes.
+
+The script validates every file against `src/oulad/schema.py` before writing,
+then reports which outputs are safe to commit:
 
 ```
 data/raw/
-├── assessments.csv
-├── courses.csv
-├── studentAssessment.csv
-├── studentInfo.csv
-├── studentRegistration.csv
-├── studentVle.csv          # ~10.7M rows, the big one
-└── vle.csv
+├── assessments.parquet
+├── courses.parquet
+├── studentAssessment.parquet
+├── studentInfo.parquet
+├── studentRegistration.parquet
+├── studentVle.parquet      # the big one, ~30 MB after conversion
+└── vle.parquet
 ```
+
+The `.csv` files stay gitignored; the `.parquet` files are committed.
 
 Licence: CC BY 4.0. Cite Kuzilek, Hlosta & Zdrahal (2017), *Scientific Data* 4,
 170171.

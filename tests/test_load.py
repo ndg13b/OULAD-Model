@@ -5,6 +5,8 @@ missing column noticed at load time names the file; the same problem noticed
 three joins later surfaces as a KeyError somewhere unrelated.
 """
 
+from pathlib import Path
+
 import pandas as pd
 import pytest
 
@@ -84,3 +86,33 @@ def test_data_available_requires_all_seven(tmp_path):
     for spec in TABLES.values():
         (tmp_path / spec.filename).touch()
     assert load.data_available(tmp_path)
+
+
+def test_parquet_is_loaded_when_present(tmp_path):
+    """Parquet is the committed format; the loader must find it without CSVs."""
+    valid_student_info().to_parquet(tmp_path / "studentInfo.parquet", index=False)
+    assert not (tmp_path / "studentInfo.csv").exists()
+
+    df = load.load_table("studentInfo", data_dir=tmp_path)
+    assert len(df) == 2
+
+
+def test_parquet_wins_over_csv(tmp_path):
+    """When both exist, parquet is preferred -- it is faster and typed."""
+    valid_student_info().to_parquet(tmp_path / "studentInfo.parquet", index=False)
+    # A CSV with different contents, so we can tell which one was read.
+    write_csv(tmp_path, "studentInfo.csv", valid_student_info().iloc[[0]])
+
+    df = load.load_table("studentInfo", data_dir=tmp_path)
+    assert len(df) == 2, "should have read the 2-row parquet, not the 1-row CSV"
+
+
+def test_data_available_accepts_parquet(tmp_path):
+    for spec in TABLES.values():
+        (tmp_path / f"{Path(spec.filename).stem}.parquet").touch()
+    assert load.data_available(tmp_path)
+
+
+def test_missing_both_formats_names_both(tmp_path):
+    with pytest.raises(FileNotFoundError, match="studentInfo.parquet"):
+        load.load_table("studentInfo", data_dir=tmp_path)

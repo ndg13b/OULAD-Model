@@ -216,3 +216,19 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ---- Project data ----
+# Raw CSVs are downloaded, not committed: studentVle.csv alone is several
+# hundred MB, well past GitHub's 100 MB per-file limit.
+# The parquet versions built by scripts/prepare_data.py ARE committed -- they
+# compress roughly 10x and load faster. Synthetic data is regenerable.
+data/raw/*
+data/interim/*
+data/synthetic/
+!data/raw/.gitkeep
+!data/raw/*.parquet
+!data/interim/.gitkeep
+
+# Generated figures (regenerable); keep the directory itself
+reports/figures/*
+!reports/figures/.gitkeep

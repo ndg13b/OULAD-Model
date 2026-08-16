@@ -15,7 +15,7 @@ from pathlib import Path
 import pandas as pd
 
 from . import paths
-from .schema import TABLES, TableSpec
+from .schema import TABLES, VALUE_FIXES, TableSpec
 
 
 class SchemaError(RuntimeError):
@@ -51,6 +51,23 @@ def _check(df: pd.DataFrame, spec: TableSpec, *, strict_grain: bool) -> None:
                 f"{spec.filename}: {dupes:,} rows duplicate the declared grain "
                 f"{spec.grain}. Joining on this table would multiply rows."
             )
+
+
+def normalise_values(df: pd.DataFrame, name: str) -> pd.DataFrame:
+    """Correct known data-entry inconsistencies in the published files.
+
+    Currently one: ``imd_band`` contains ``"10-20"`` where every other category
+    carries a percent sign. See ``schema.VALUE_FIXES`` for why this is handled
+    centrally rather than left to whoever happens to touch the column.
+    """
+    fixes = VALUE_FIXES.get(name)
+    if not fixes:
+        return df
+
+    for column, mapping in fixes.items():
+        if column in df.columns:
+            df[column] = df[column].replace(mapping)
+    return df
 
 
 def load_table(
@@ -95,6 +112,7 @@ def load_table(
             "See README.md > Getting the data."
         )
 
+    df = normalise_values(df, name)
     _check(df, spec, strict_grain=strict_grain)
     return df
 

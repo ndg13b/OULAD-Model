@@ -116,3 +116,33 @@ def test_data_available_accepts_parquet(tmp_path):
 def test_missing_both_formats_names_both(tmp_path):
     with pytest.raises(FileNotFoundError, match="studentInfo.parquet"):
         load.load_table("studentInfo", data_dir=tmp_path)
+
+
+def test_imd_band_missing_percent_sign_is_normalised():
+    """OULAD ships '10-20' without a percent sign; every other band has one.
+
+    Left alone it silently drops ~11% of students from any analysis that
+    matches band names against schema.IMD_ORDER.
+    """
+    df = valid_student_info()
+    df.loc[0, "imd_band"] = "10-20"
+
+    out = load.normalise_values(df, "studentInfo")
+    assert out.loc[0, "imd_band"] == "10-20%"
+
+
+def test_normalise_leaves_other_tables_alone():
+    df = pd.DataFrame({"imd_band": ["10-20"]})
+    assert load.normalise_values(df, "courses").loc[0, "imd_band"] == "10-20"
+
+
+def test_loaded_imd_bands_all_match_the_declared_order(tmp_path):
+    from oulad.schema import IMD_ORDER
+
+    df = valid_student_info()
+    df.loc[0, "imd_band"] = "10-20"
+    write_csv(tmp_path, "studentInfo.csv", df)
+
+    loaded = load.load_table("studentInfo", data_dir=tmp_path)
+    present = set(loaded["imd_band"].dropna())
+    assert present <= set(IMD_ORDER), f"unrecognised bands: {present - set(IMD_ORDER)}"

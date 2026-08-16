@@ -170,12 +170,12 @@ it. Orders are recorded in `schema.py`.
 
 Worked in order. Each finishes before the next begins.
 
-**Phase 1 — Load, inspect, label.** *(this is where the repo is now)*
+**Phase 1 — Load, inspect, label.** *(done)*
 Load all seven files, validate shapes, document grain and missingness, build the
 label, quantify the cutoff/population trade-off.
 → `scripts/phase1_inspect.py`
 
-**Phase 2 — Feature engineering.**
+**Phase 2 — Feature engineering.** *(done — see `06-phase2-features.md`)*
 `build_features(cutoff_day)`, returning one row per enrolment:
 - *Volume*: total clicks, active days, clicks per active day
 - *Trajectory*: clicks per week, week-over-week slope, days since last activity
@@ -186,8 +186,8 @@ label, quantify the cutoff/population trade-off.
 
 Expect 40–80 columns.
 
-**Phase 3 — The model ladder.** The four models above, identical splits,
-honest comparison.
+**Phase 3 — The model ladder.** *(next)* The four models above, identical
+splits, honest comparison.
 
 **Phase 4 — The analysis that makes it a project.**
 - **Cutoff sweep** — rerun everything at days 7, 14, 28, 56, 84. Plot

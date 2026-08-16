@@ -26,10 +26,12 @@ Then the written docs, which go deeper on the reasoning:
 | [`docs/01-glossary.md`](docs/01-glossary.md) | Every term, defined. No jargon is used before it appears here |
 | [`docs/02-leakage.md`](docs/02-leakage.md) | The ways this dataset will fool you, and the rules that prevent it |
 | [`docs/04-phase1-findings.md`](docs/04-phase1-findings.md) | What the real data actually says — measured, not assumed |
+| [`docs/06-phase2-features.md`](docs/06-phase2-features.md) | The feature set, the decisions behind it, and what worked |
+| [`docs/05-proposal-regularity.md`](docs/05-proposal-regularity.md) | A separate study OULAD could support, for the `adherence` project |
 
-**Status: Phase 1 complete** — data loading, schema validation, label
-construction, the cutoff/population analysis, and exploratory data analysis.
-Feature engineering is next.
+**Status: Phase 2 complete** — data loading, validation, labels, the
+cutoff/population analysis, EDA, and the feature set (45 columns, PR-AUC 0.766
+untuned against a 0.441 floor). The model ladder is next.
 
 ---
 
@@ -148,6 +150,7 @@ Section 4 is the one to read carefully. It is explained in
 │   ├── schema.py        #   expected shape of all seven tables
 │   ├── load.py          #   readers with validation
 │   ├── labels.py        #   label construction + cutoff population
+│   ├── features.py      #   build_features(cutoff_day)
 │   └── viz.py           #   shared plotting style
 ├── scripts/             # things you run
 │   ├── phase1_inspect.py

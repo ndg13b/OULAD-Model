@@ -113,12 +113,30 @@ split puts the same person in train and test.
 
 ### Metric: PR-AUC, plus precision@top-10%
 
-PR-AUC (area under the precision-recall curve) because the data is imbalanced
-and we care about the positive class. Precision@top-10% because it is the
-number that corresponds to how the system would actually be used.
+**Correction to an assumption worth flagging.** This project was planned on the
+expectation of a ~1/3 positive rate and "imbalanced data" as the justification
+for PR-AUC. The real number is **52.8%** — Fail (21.6%) plus Withdrawn (31.2%).
+The positive class is the *majority*. After restricting to students still
+enrolled at day 28 it falls to 44.1%, which is still roughly balanced.
 
-Accuracy is reported nowhere. With a ~33% base rate, "nobody is at risk" scores
-67%, and any metric a constant beats is the wrong metric.
+So the imbalance argument does not apply, and any reasoning that depended on it
+needs redoing. PR-AUC survives, but for a different reason:
+
+- **PR-AUC**, because we act on the *top of the ranking*. Precision and recall
+  both ignore true negatives, which is right here: correctly predicting that a
+  passing student will pass earns a tutor nothing. ROC-AUC counts those, so it
+  rewards work we do not care about.
+- **Precision@top-10%**, because it is literally the deployment question: of the
+  students we have time to contact, how many needed contacting?
+
+Report ROC-AUC alongside for comparability with the published literature, which
+mostly uses it.
+
+Accuracy is still reported nowhere, but the usual reason is now the wrong one.
+At a 52.8% base rate the majority-class trick barely beats a coin flip, so
+accuracy is not *inflated* — it is just answering a question nobody asked. It
+forces a threshold, and it treats "missed an at-risk student" and "wasted a
+tutor's time" as equally bad, which they are not.
 
 ### Models: a ladder, on identical splits
 

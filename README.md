@@ -13,6 +13,7 @@ and every script prints an explanation of what it is doing and why.
 | [`docs/00-project-design.md`](docs/00-project-design.md) | The question, the decisions, and the alternatives that were rejected |
 | [`docs/01-glossary.md`](docs/01-glossary.md) | Every term, defined. No jargon is used before it appears here |
 | [`docs/02-leakage.md`](docs/02-leakage.md) | The ways this dataset will fool you, and the rules that prevent it |
+| [`docs/04-phase1-findings.md`](docs/04-phase1-findings.md) | What the real data actually says — measured, not assumed |
 
 **Status: Phase 1 complete** — data loading, schema validation, label
 construction, and the cutoff/population analysis. Feature engineering is next.
@@ -23,11 +24,11 @@ construction, and the cutoff/population analysis. Feature engineering is next.
 
 The Open University publishes anonymised records for 32,593 students: who they
 are, what they clicked in the virtual learning environment, what they scored,
-and how they finished (Pass, Fail, Withdrawn, Distinction). About a third fail
-or withdraw. If we could spot them from their first few weeks of behaviour, a
-tutor could intervene while it still mattered. The catch is that the signal that
-makes prediction easy — a student who has stopped showing up — mostly arrives
-once it is too late to act.
+and how they finished (Pass, Fail, Withdrawn, Distinction). 52.8% fail or
+withdraw — this is not a rare event, it is the majority outcome. If we could
+spot them from their first few weeks of behaviour, a tutor could intervene while
+it still mattered. The catch is that the signal that makes prediction easy — a
+student who has stopped showing up — mostly arrives once it is too late to act.
 
 Quantifying that trade-off is the project.
 

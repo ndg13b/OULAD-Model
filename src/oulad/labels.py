@@ -133,6 +133,39 @@ def eligible_at_cutoff(labels: pd.DataFrame, cutoff_day: int) -> pd.Series:
     return ~already_left
 
 
+def modelling_population(
+    labels: pd.DataFrame,
+    cutoff_day: int,
+    *,
+    include_already_left: bool = False,
+) -> pd.DataFrame:
+    """The rows to train and evaluate on at ``cutoff_day``. **Use this.**
+
+    This is the canonical entry point for "which enrolments are we modelling?"
+    and it applies the still-enrolled filter by default. Everything downstream
+    -- feature building, splitting, scoring -- should start from what this
+    returns, so the population rule is applied in exactly one place.
+
+    Parameters
+    ----------
+    cutoff_day
+        The day the prediction is made. Only information dated on or before
+        this day may be used as a feature.
+    include_already_left
+        Escape hatch, off by default. Setting it True restores the naive
+        framing in which every enrolment is scored, including students who had
+        already unregistered before the cutoff.
+
+        It exists for one legitimate purpose: demonstrating how much that
+        framing inflates results. Any number produced with it True is not a
+        performance estimate and must not be reported as one. See
+        docs/02-leakage.md.
+    """
+    if include_already_left:
+        return labels.copy()
+    return labels.loc[eligible_at_cutoff(labels, cutoff_day)].copy()
+
+
 def cutoff_population_summary(
     labels: pd.DataFrame, cutoffs: list[int]
 ) -> pd.DataFrame:

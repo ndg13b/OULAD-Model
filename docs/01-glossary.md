@@ -54,22 +54,33 @@ is what we want to find. Which class you call positive changes what precision
 and recall mean, so it is worth stating explicitly.
 
 **Base rate / prevalence / class prior** — the proportion of rows that are
-positive. If 33% of students are at risk, the base rate is 0.33. This is the
-number every model result must be compared against, because you can achieve it
-without a model.
+positive. In OULAD 52.8% of enrolments end in Fail or Withdrawn, so the base
+rate is 0.528. This is the number every model result must be compared against,
+because you can achieve it without a model.
 
 **Class imbalance** — when one class is much rarer than the other. It matters
 because it makes accuracy meaningless (see below) and because some algorithms
-under-fit the rare class.
+under-fit the rare class. **This project does not actually have it**, which is
+worth knowing, because a lot of advice about early-warning models assumes rare
+positives and does not apply here.
 
 ---
 
 ## Evaluating a model
 
-**Accuracy** — the fraction of predictions that are correct. Almost useless
-here. If 33% of students are at risk, a model that says "nobody is at risk"
-scores 67% accuracy and has zero value. Any metric that a constant prediction
-can score well on is the wrong metric.
+**Accuracy** — the fraction of predictions that are correct. Not used here, for
+two reasons.
+
+It forces you to pick a threshold, and the threshold is a deployment decision
+(how many students can a tutor actually contact?) rather than a property of the
+model. And it treats both mistakes as equally bad: missing an at-risk student
+and wasting a tutor's time on a student who was fine are not the same error, but
+accuracy counts them identically.
+
+The textbook objection — that on rare-event data a model predicting "no" every
+time scores brilliantly — does not apply here, because at a 52.8% base rate that
+trick barely beats a coin flip. It is still the wrong metric; just not for the
+usual reason.
 
 **Confusion matrix** — the 2×2 table of what happened:
 

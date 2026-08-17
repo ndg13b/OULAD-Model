@@ -7,15 +7,31 @@ This repo is built to be **read as well as run**. Design decisions are written
 down and argued for rather than assumed, terms are defined before they are used,
 and every script prints an explanation of what it is doing and why.
 
+**Start with the notebooks** — they're committed with outputs, so you can read
+them on GitHub without running anything.
+
+| | Notebook | What it settles |
+|---|---|---|
+| 01 | [Meeting the data](notebooks/01-meet-the-data.ipynb) | The seven tables, grain, joins, missing values |
+| 02 | [What are we predicting?](notebooks/02-the-target.ipynb) | The label, the base rate, why accuracy is out |
+| 03 | [**Who are we predicting for?**](notebooks/03-the-population-question.ipynb) | The population decision — argued, then demonstrated with a real model |
+| 04 | [Exploratory data analysis](notebooks/04-exploring-behaviour.ipynb) | Distributions, trajectories, demographics, assessments |
+
+Then the written docs, which go deeper on the reasoning:
+
 | Document | What's in it |
 |---|---|
-| [**`docs/03-what-the-data-actually-is.md`**](docs/03-what-the-data-actually-is.md) | **Start here.** What the OU recorded, what we're building, and the one decision that determines whether it's useful. Assumes no ML background |
+| [`docs/03-what-the-data-actually-is.md`](docs/03-what-the-data-actually-is.md) | What the OU recorded and the one decision that determines whether any of this is useful. Assumes no ML background |
 | [`docs/00-project-design.md`](docs/00-project-design.md) | The question, the decisions, and the alternatives that were rejected |
 | [`docs/01-glossary.md`](docs/01-glossary.md) | Every term, defined. No jargon is used before it appears here |
 | [`docs/02-leakage.md`](docs/02-leakage.md) | The ways this dataset will fool you, and the rules that prevent it |
+| [`docs/04-phase1-findings.md`](docs/04-phase1-findings.md) | What the real data actually says — measured, not assumed |
+| [`docs/06-phase2-features.md`](docs/06-phase2-features.md) | The feature set, the decisions behind it, and what worked |
+| [`docs/05-proposal-regularity.md`](docs/05-proposal-regularity.md) | A separate study OULAD could support, for the `adherence` project |
 
-**Status: Phase 1 complete** — data loading, schema validation, label
-construction, and the cutoff/population analysis. Feature engineering is next.
+**Status: Phase 2 complete** — data loading, validation, labels, the
+cutoff/population analysis, EDA, and the feature set (45 columns, PR-AUC 0.766
+untuned against a 0.441 floor). The model ladder is next.
 
 ---
 
@@ -23,11 +39,11 @@ construction, and the cutoff/population analysis. Feature engineering is next.
 
 The Open University publishes anonymised records for 32,593 students: who they
 are, what they clicked in the virtual learning environment, what they scored,
-and how they finished (Pass, Fail, Withdrawn, Distinction). About a third fail
-or withdraw. If we could spot them from their first few weeks of behaviour, a
-tutor could intervene while it still mattered. The catch is that the signal that
-makes prediction easy — a student who has stopped showing up — mostly arrives
-once it is too late to act.
+and how they finished (Pass, Fail, Withdrawn, Distinction). 52.8% fail or
+withdraw — this is not a rare event, it is the majority outcome. If we could
+spot them from their first few weeks of behaviour, a tutor could intervene while
+it still mattered. The catch is that the signal that makes prediction easy — a
+student who has stopped showing up — mostly arrives once it is too late to act.
 
 Quantifying that trade-off is the project.
 
@@ -128,13 +144,17 @@ Section 4 is the one to read carefully. It is explained in
 ## Layout
 
 ```
+├── notebooks/           # the walkthrough — read these first
 ├── src/oulad/           # library code — importable, testable
 │   ├── paths.py         #   where things live on disk
 │   ├── schema.py        #   expected shape of all seven tables
 │   ├── load.py          #   readers with validation
-│   └── labels.py        #   label construction + cutoff population
+│   ├── labels.py        #   label construction + cutoff population
+│   ├── features.py      #   build_features(cutoff_day)
+│   └── viz.py           #   shared plotting style
 ├── scripts/             # things you run
 │   ├── phase1_inspect.py
+│   ├── prepare_data.py
 │   └── make_synthetic.py
 ├── docs/                # the reasoning
 ├── tests/

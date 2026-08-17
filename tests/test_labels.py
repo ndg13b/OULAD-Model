@@ -116,6 +116,38 @@ def test_base_rate_falls_as_cutoff_moves_later():
     assert summary.iloc[-1]["n_eligible"] == 100
 
 
+def test_modelling_population_filters_by_default():
+    """The still-enrolled rule is the default, not something you opt into."""
+    info = make_info([(1, "Withdrawn"), (2, "Pass")])
+    reg = make_reg([(1, 5.0), (2, None)])
+    out = lab.build_labels(info, reg)
+
+    pop = lab.modelling_population(out, 28)
+    assert set(pop["id_student"]) == {2}, "student who left on day 5 must be dropped"
+
+
+def test_modelling_population_escape_hatch_restores_everyone():
+    info = make_info([(1, "Withdrawn"), (2, "Pass")])
+    reg = make_reg([(1, 5.0), (2, None)])
+    out = lab.build_labels(info, reg)
+
+    pop = lab.modelling_population(out, 28, include_already_left=True)
+    assert set(pop["id_student"]) == {1, 2}
+
+
+def test_modelling_population_does_not_mutate_input():
+    info = make_info([(1, "Withdrawn"), (2, "Pass")])
+    reg = make_reg([(1, 5.0), (2, None)])
+    out = lab.build_labels(info, reg)
+    before = len(out)
+
+    pop = lab.modelling_population(out, 28)
+    pop["at_risk"] = 99
+
+    assert len(out) == before
+    assert set(out["at_risk"]) == {0, 1}, "caller's frame must be untouched"
+
+
 def test_population_summary_accounting_adds_up():
     info = make_info([(1, "Withdrawn"), (2, "Pass"), (3, "Fail")])
     reg = make_reg([(1, 5.0), (2, None), (3, None)])

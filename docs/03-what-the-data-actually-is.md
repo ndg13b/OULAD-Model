@@ -55,8 +55,26 @@ And critically, one column called `final_result`, which is one of four values:
 | `Fail` | Stayed enrolled to the end, did not pass |
 | `Withdrawn` | Left the course before the end |
 
-Roughly: 38% Pass, 31% Withdrawn, 22% Fail, 9% Distinction. So about **a third
-of enrolments end in Fail or Withdrawn**.
+The actual counts, out of 32,593 enrolments:
+
+| Outcome | Count | Share |
+|---|---:|---:|
+| Pass | 12,361 | 37.9% |
+| Withdrawn | 10,156 | 31.2% |
+| Fail | 7,052 | 21.6% |
+| Distinction | 3,024 | 9.3% |
+
+So **52.8% of enrolments end in Fail or Withdrawn** — slightly more than half.
+
+That number is worth pausing on, because it is higher than people expect and it
+changes how the problem should be described. This is not a rare-event problem.
+The thing we are trying to detect is the *majority* outcome. Distance learning
+is hard, and most enrolments do not end in a pass.
+
+One practical consequence: "flag the at-risk students" cannot mean flagging
+everyone the model thinks is at risk, because that would be half the cohort and
+no tutor has that much time. It has to mean *ranking* students and working down
+the list. That distinction shapes how we measure success later.
 
 ### `studentVle` — the clickstream
 

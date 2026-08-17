@@ -189,3 +189,16 @@ IMD_ORDER = (
 )
 
 AGE_ORDER = ("0-35", "35-55", "55<=")
+
+# Known data-entry inconsistencies in the published files, corrected on load.
+#
+# `imd_band` ships one category without its percent sign: "10-20" where every
+# other band is "10-20%". It affects 3,516 enrolments -- about 11% of the
+# dataset -- and it is silent: any code that matches band names against a
+# clean list simply drops those students without complaint.
+#
+# This is corrected in `load.normalise_values`, not left to callers, because
+# "remember to fix this every time" is not a strategy.
+VALUE_FIXES: dict[str, dict[str, str]] = {
+    "studentInfo": {"imd_band": {"10-20": "10-20%"}},
+}

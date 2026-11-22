@@ -144,11 +144,21 @@ def sample_oulad(
     splitter = GroupShuffleSplit(n_splits=1, test_size=0.3, random_state=seed)
     train_idx, test_idx = next(splitter.split(X, y, groups))
 
-    rng = np.random.default_rng(seed)
+    # Two independent generators, deliberately.
+    #
+    # A single shared generator would be consumed by the training draw first,
+    # so a different `n_train` would leave it in a different state and the test
+    # draw would land on different students. That silently breaks the central
+    # comparison this harness exists for: a size sweep is only meaningful if
+    # every row is scored on the SAME test set, with only the context changing.
+    # Seeded separately, the test sample depends on `seed` and `n_test` alone.
+    rng_train = np.random.default_rng([seed, 0])
+    rng_test = np.random.default_rng([seed, 1])
+
     if len(train_idx) > n_train:
-        train_idx = rng.choice(train_idx, size=n_train, replace=False)
+        train_idx = rng_train.choice(train_idx, size=n_train, replace=False)
     if len(test_idx) > n_test:
-        test_idx = rng.choice(test_idx, size=n_test, replace=False)
+        test_idx = rng_test.choice(test_idx, size=n_test, replace=False)
 
     X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
 

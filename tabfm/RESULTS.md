@@ -90,6 +90,22 @@ python tabfm/30-oulad.py --n-train 4000 --n-test 4000 --sweep
 
 Test set held fixed at 4,000 rows; only the context grows. PR-AUC:
 
+> **Correction, added later.** The test set was *not* in fact held fixed when
+> these numbers were produced. `sample_oulad` drew the training subsample and
+> the test subsample from one shared generator, so changing `n_train` left the
+> generator in a different state and shifted the test draw too. The base rate
+> moved by up to ~0.02 across rows as a result.
+>
+> Within any single row this changes nothing — every model there was scored on
+> the same students, so each row's model-vs-model comparison still stands, and
+> the three-seed result in section 3 is unaffected. What it adds is noise to the
+> *trend across* rows, so the size story below is a little less clean than it
+> reads.
+>
+> Fixed in `tabfm_bench.py` (separate generators for train and test). Re-running
+> the sweep would tighten these numbers; the GPU notebook
+> [`40-kaggle-gpu.ipynb`](40-kaggle-gpu.ipynb) does it on the corrected code.
+
 | n_train | logistic | gbm | TabPFN | TabICL | TabICL − gbm |
 |---:|---:|---:|---:|---:|---:|
 | 250 | 0.6780 | 0.6597 | — | **0.7029** | +0.0432 |

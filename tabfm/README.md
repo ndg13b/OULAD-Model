@@ -81,15 +81,14 @@ comparing precisely because it makes different trade-offs.
 | [`00-what-they-are.md`](00-what-they-are.md) | The concepts, with no code. Start here |
 | [`01-setup.md`](01-setup.md) | Install, the licence, the GPU question, the access token |
 | [`10-first-contact.py`](10-first-contact.py) | Run TabPFN on a small classic dataset, against real baselines |
+| [`20-what-fit-actually-does.py`](20-what-fit-actually-does.py) | Where the time goes, what the context window is, what breaks |
 | [`30-oulad.py`](30-oulad.py) | Against the tuned gradient boosting baseline on 45 real features |
 | [`tabfm_bench.py`](tabfm_bench.py) | The shared harness: grouped splits, the baselines, the comparison table |
 | [`RESULTS.md`](RESULTS.md) | Measured numbers from an actual run, and what `01-setup.md` gets wrong |
 
-`20-what-fit-actually-does.py` — where the time goes, what the context window
-is, what breaks — is referred to as the next step at the end of
-`10-first-contact.py`, but has not been written yet. Section 4 of
-[`RESULTS.md`](RESULTS.md) covers the `fit`-versus-`predict` cost question it
-was meant to answer.
+The three numbered scripts are plain Python, not notebooks — run them, read the
+printed commentary as it goes. `20-` and `30-` need the OULAD parquet files in
+`data/raw/`; `10-` uses a built-in scikit-learn dataset and needs nothing.
 
 ## The honest summary before you start
 

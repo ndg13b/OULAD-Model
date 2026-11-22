@@ -215,6 +215,26 @@ once a week, 97 seconds is nothing and the accuracy is free. For anything
 interactive, or for scoring the full 27,538-row cohort, this is the number that
 decides it — and it is an argument for a GPU, not against the model.
 
+### Where that cost actually sits
+
+`20-what-fit-actually-does.py` separates the two axes. Fitting a line through
+predictions on 250 / 1,000 / 2,000 rows from one model with 1,000 context rows:
+
+```
+predict cost  ~  10.9 s  +  0.0084 s x (rows scored)
+```
+
+Almost all of it is a **fixed** cost for re-reading the context, paid in full on
+every `predict_proba` call; an extra scored row is only ~8 ms. The same run at
+4,000 context rows takes 60 s to score just 500 rows, and 5,500 context rows
+takes 84 s to score 200 — the context, not the workload, sets the bill.
+
+That has one blunt operational consequence, also measured there: scoring 500
+rows in ten calls of 50 took **5.9x** as long as one call of 500 (56.9 s vs
+9.6 s) for bit-identical output. Batch as hard as memory allows. A design that
+scores one row at a time pays the full context cost per row, which is what makes
+these models look unusable in an interactive service.
+
 One correction to the framing in [`README.md`](README.md), which says `fit()`
 "stores your data — milliseconds": TabICL's `fit` is ~0.7 s, not milliseconds,
 because it loads the 110 MB checkpoint from disk and fits its ensemble
@@ -306,7 +326,34 @@ Reqwest(reqwest::Error { kind: Request,
 `transfer.xethub.hf.co` appears to be stale — it is on the allowlist and was
 never used.
 
-### 3. Minor
+### 3. The three preprocessing rules did not show a measurable effect
+
+`01-setup.md` gives three rules that invert normal practice: do not scale, do
+not one-hot encode, do not impute, because "preprocessing it yourself makes it
+worse". `20-what-fit-actually-does.py` section 3b tests that directly, running
+TabICL on the same split twice — once on the raw frame, once through the same
+standardise + one-hot + median-impute pipeline the logistic baseline uses:
+
+| scored rows | raw | scaled + one-hot + imputed | difference |
+|---:|---:|---:|---:|
+| 500 | 0.7061 | 0.6974 | +0.0086 (raw ahead) |
+| 1,000 | 0.7740 | 0.7751 | −0.0010 (preprocessing ahead) |
+
+The sign flips between the two, and both margins are inside the sampling error
+at these test sizes. So on OULAD the rules are **not wrong, but not
+demonstrated either** — preprocessing did not measurably hurt. The mechanism the
+docs describe is plausible and may well dominate on other data; it just is not
+what this dataset shows at these sizes.
+
+The defensible reason to pass raw data here is the one the doc does not lead
+with: it is less code, and it avoids asserting something false about the data.
+`docs/06-phase2-features.md` ("Missing values are left missing") already makes
+this argument for the rest of the project — a made-up value is
+indistinguishable from a real one downstream, and "we don't know" is itself
+information. A model that takes NaN natively gets that for free, instead of
+needing an imputer plus a missingness indicator to recover it.
+
+### 4. Minor
 
 * "sixteen `nvidia-*` packages" — it is **15** (19 counting `cuda-toolkit`,
   `cuda-bindings`, `cuda-pathfinder` and `triton`). The ~5 GB figure is right:
@@ -317,11 +364,11 @@ never used.
   reader meets.
 * [`README.md`](README.md)'s file table listed three `.ipynb` notebooks
   (`10-first-contact.ipynb`, `20-what-fit-actually-does.ipynb`,
-  `30-oulad-the-real-test.ipynb`). The actual files are `10-first-contact.py`
-  and `30-oulad.py`, and there is no `20-` file at all — `10-first-contact.py`
-  points to it as the next step, but it has not been written. **Fixed**: the
-  table now lists the files that exist, and says plainly that the `20-` one does
-  not.
+  `30-oulad-the-real-test.ipynb`). None existed: the real files are `.py`, named
+  `10-first-contact.py` and `30-oulad.py`, and nothing `20-` had been written at
+  all, though `10-first-contact.py` ends by pointing at it. **Fixed**: the table
+  now lists real, linked files, and `20-what-fit-actually-does.py` has since
+  been written — it is where the timing decomposition below comes from.
 
 ### Confirmed correct
 
@@ -341,6 +388,7 @@ python -m venv .venv
 .venv/bin/pip install -e ".[tabfm]"        # ~5.7 GB, several minutes
 .venv/bin/python tabfm/30-oulad.py --n-train 4000 --n-test 4000
 .venv/bin/python tabfm/30-oulad.py --n-train 4000 --n-test 4000 --sweep
+.venv/bin/python tabfm/20-what-fit-actually-does.py   # ~6.5 min, peaks ~8 GB
 ```
 
 In a cloud session, the environment needs `cas-server.xethub.hf.co` and
@@ -360,7 +408,9 @@ done
 The per-size timings in section 4, and the compact seed tables in section 3,
 come from short scripts calling `tabfm_bench.run_gbm` and `run_tabicl` directly;
 `--sweep` itself prints only PR-AUC, and the harness prints no cross-seed
-summary.
+summary. The cost decomposition and the preprocessing comparison come from
+`20-what-fit-actually-does.py`, which prints them directly (add `--quick` for a
+~3.5-minute version, or `--max-context 0` to skip its memory-hungry step).
 
-Budget roughly 20 minutes of CPU for everything above, and expect TabPFN to be
+Budget roughly 30 minutes of CPU for everything above, and expect TabPFN to be
 absent from every table unless you hold a Prior Labs `TABPFN_TOKEN`.

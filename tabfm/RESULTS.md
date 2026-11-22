@@ -315,10 +315,13 @@ never used.
   torch install in the Install section cannot be run as written. The doc already
   flags this further down; worth hoisting, since it is the first command a
   reader meets.
-* [`README.md`](README.md)'s file table lists three `.ipynb` notebooks
+* [`README.md`](README.md)'s file table listed three `.ipynb` notebooks
   (`10-first-contact.ipynb`, `20-what-fit-actually-does.ipynb`,
   `30-oulad-the-real-test.ipynb`). The actual files are `10-first-contact.py`
-  and `30-oulad.py`, and there is no `20-` file at all.
+  and `30-oulad.py`, and there is no `20-` file at all — `10-first-contact.py`
+  points to it as the next step, but it has not been written. **Fixed**: the
+  table now lists the files that exist, and says plainly that the `20-` one does
+  not.
 
 ### Confirmed correct
 

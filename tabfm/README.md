@@ -5,7 +5,7 @@ and opinionated guide*, using the OULAD data from the rest of this repo as the
 real-world test case.
 
 Read [`00-what-they-are.md`](00-what-they-are.md) first if the idea is new, then
-work through the notebooks in order.
+run the numbered scripts in order.
 
 ---
 
@@ -61,7 +61,8 @@ result and it is why the book exists.
 
 What is *not* established is whether this holds at scale, on messy real data,
 under distribution shift, or anywhere the synthetic prior does not reach. The
-notebooks here test some of that on OULAD rather than taking it on faith.
+scripts here test some of that on OULAD rather than taking it on faith, and
+[`RESULTS.md`](RESULTS.md) records what they measured.
 
 ## The two families
 
@@ -79,9 +80,16 @@ comparing precisely because it makes different trade-offs.
 |---|---|
 | [`00-what-they-are.md`](00-what-they-are.md) | The concepts, with no code. Start here |
 | [`01-setup.md`](01-setup.md) | Install, the licence, the GPU question, the access token |
-| `10-first-contact.ipynb` | Run TabPFN on a small classic dataset, against real baselines |
-| `20-what-fit-actually-does.ipynb` | Where the time goes, what the context window is, what breaks |
-| `30-oulad-the-real-test.ipynb` | Against the tuned gradient boosting baseline on 45 real features |
+| [`10-first-contact.py`](10-first-contact.py) | Run TabPFN on a small classic dataset, against real baselines |
+| [`30-oulad.py`](30-oulad.py) | Against the tuned gradient boosting baseline on 45 real features |
+| [`tabfm_bench.py`](tabfm_bench.py) | The shared harness: grouped splits, the baselines, the comparison table |
+| [`RESULTS.md`](RESULTS.md) | Measured numbers from an actual run, and what `01-setup.md` gets wrong |
+
+`20-what-fit-actually-does.py` — where the time goes, what the context window
+is, what breaks — is referred to as the next step at the end of
+`10-first-contact.py`, but has not been written yet. Section 4 of
+[`RESULTS.md`](RESULTS.md) covers the `fit`-versus-`predict` cost question it
+was meant to answer.
 
 ## The honest summary before you start
 

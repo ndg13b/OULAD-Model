@@ -34,7 +34,7 @@ The practical consequences are strange if you are used to ordinary ML:
 
 | | Ordinary model | Tabular foundation model |
 |---|---|---|
-| `fit()` | does the work — minutes | stores your data — milliseconds |
+| `fit()` | does the work — minutes | stores your data — well under a second, and *constant* in the data size |
 | `predict()` | cheap lookup | **does the work** — this is the expensive call |
 | Hyperparameters | many, need tuning | few, mostly do not need tuning |
 | More data | generally better | better *up to a hard ceiling*, then refuses |
@@ -82,8 +82,9 @@ comparing precisely because it makes different trade-offs.
 | [`01-setup.md`](01-setup.md) | Install, the licence, the GPU question, the access token |
 | [`10-first-contact.py`](10-first-contact.py) | Run TabPFN on a small classic dataset, against real baselines |
 | [`20-what-fit-actually-does.py`](20-what-fit-actually-does.py) | Where the time goes, what the context window is, what breaks |
-| [`30-oulad.py`](30-oulad.py) | Against the tuned gradient boosting baseline on 45 real features |
+| [`30-oulad.py`](30-oulad.py) | Against the gradient boosting baseline (defaults) on 45 real features |
 | [`tabfm_bench.py`](tabfm_bench.py) | The shared harness: grouped splits, the baselines, the comparison table |
+| [`40-kaggle-gpu.ipynb`](40-kaggle-gpu.ipynb) | **Free GPU on Kaggle**: what CUDA is, measured; the full-size sweep a CPU cannot run; OpenML small-data comparison |
 | [`RESULTS.md`](RESULTS.md) | Measured numbers from an actual run, and what `01-setup.md` gets wrong |
 
 The three numbered scripts are plain Python, not notebooks — run them, read the

@@ -308,7 +308,9 @@ def _unavailable(name: str, why: str) -> Result:
 
 def _explain(exc: Exception) -> str:
     """Turn the common failures into something actionable."""
-    text = str(exc)
+    # Collapse to a single line: several of these exceptions carry multi-line
+    # messages, and an embedded newline breaks the report table it lands in.
+    text = " ".join(str(exc).split())
     kind = type(exc).__name__
 
     if "GatedRepo" in kind or "gated" in text.lower():

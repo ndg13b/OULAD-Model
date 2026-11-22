@@ -29,6 +29,14 @@ Then the written docs, which go deeper on the reasoning:
 | [`docs/06-phase2-features.md`](docs/06-phase2-features.md) | The feature set, the decisions behind it, and what worked |
 | [`docs/05-proposal-regularity.md`](docs/05-proposal-regularity.md) | A separate study OULAD could support, for the `adherence` project |
 
+### Also in here: [`tabfm/`](tabfm/) — tabular foundation models
+
+A separate strand: TabPFN and TabICL, the models that predict *without being
+trained*. Uses the OULAD feature set as a realistic test case against the
+gradient boosting baseline below. Start at [`tabfm/README.md`](tabfm/README.md).
+
+---
+
 **Status: Phase 2 complete** — data loading, validation, labels, the
 cutoff/population analysis, EDA, and the feature set (45 columns, PR-AUC 0.766
 untuned against a 0.441 floor). The model ladder is next.
@@ -145,6 +153,7 @@ Section 4 is the one to read carefully. It is explained in
 
 ```
 ├── notebooks/           # the walkthrough — read these first
+├── tabfm/               # tabular foundation models (separate strand)
 ├── src/oulad/           # library code — importable, testable
 │   ├── paths.py         #   where things live on disk
 │   ├── schema.py        #   expected shape of all seven tables

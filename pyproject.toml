@@ -21,6 +21,9 @@ dependencies = [
 # Added in Phase 3 when we reach gradient boosting and model explanation.
 models = ["xgboost>=2.0", "shap>=0.44"]
 notebooks = ["jupyter>=1.0", "ipykernel>=6.0"]
+# Tabular foundation models (tabfm/). Pulls torch; on a GPU-less machine
+# install CPU-only torch FIRST -- see tabfm/01-setup.md.
+tabfm = ["tabpfn>=10.0", "tabicl>=2.0"]
 dev = ["pytest>=7.0"]
 
 [tool.setuptools.packages.find]

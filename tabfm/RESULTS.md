@@ -4,8 +4,9 @@ Real numbers from an actual run, **22 November 2026**. Everything below was
 produced by `tabfm/30-oulad.py` on the committed OULAD parquet files — no
 estimates, no figures carried over from the book.
 
-**Headline: TabICL beat gradient boosting at every training size tested, and it
-cost about 5,000x more per prediction.**
+**Headline: TabICL beat gradient boosting at every training size tested and on
+every seed tested — 9 for 9 on the three-seed check — and it cost about 5,000x
+more per prediction.**
 
 TabPFN did not run. See [Why TabPFN did not run](#why-tabpfn-did-not-run).
 
@@ -116,10 +117,68 @@ measured, not as a converged answer.
 One caveat on reading individual cells: logistic regression goes *down* from
 2,000 to 4,000 rows (0.7418 → 0.7312). That is a single grouped split, and the
 script's own closing advice applies — a 0.01 PR-AUC difference on one split is
-noise. **Everything above is `seed=0` only.** Run three seeds before believing
-any ranking, including TabICL's.
+noise. Everything in this section is `seed=0`; the next section re-runs the
+ranking on three seeds.
 
-## 3. fit() versus predict(): the cost
+## 3. Does the ranking survive a change of split?
+
+The sweep above is one split. `--seed` changes the `GroupShuffleSplit` *and* the
+subsample, so each seed is a genuinely different grouped partition of the same
+27,538 enrolments. Three seeds x three sizes, test set fixed at 4,000, PR-AUC:
+
+| n_train | seed | base rate | logistic | gbm | TabICL | TabICL − gbm | winner |
+|---:|---:|---:|---:|---:|---:|---:|:--|
+| 250 | 0 | 0.4385 | 0.6780 | 0.6597 | 0.7029 | +0.0432 | TabICL |
+| 250 | 1 | 0.4475 | 0.6417 | 0.6467 | 0.7053 | +0.0586 | TabICL |
+| 250 | 2 | 0.4320 | 0.6208 | 0.6405 | 0.6673 | +0.0268 | TabICL |
+| 1,000 | 0 | 0.4365 | 0.7247 | 0.7041 | 0.7413 | +0.0372 | TabICL |
+| 1,000 | 1 | 0.4537 | 0.7077 | 0.6898 | 0.7303 | +0.0405 | TabICL |
+| 1,000 | 2 | 0.4457 | 0.7095 | 0.7045 | 0.7372 | +0.0327 | TabICL |
+| 4,000 | 0 | 0.4363 | 0.7312 | 0.7348 | 0.7585 | +0.0237 | TabICL |
+| 4,000 | 1 | 0.4452 | 0.7247 | 0.7374 | 0.7579 | +0.0204 | TabICL |
+| 4,000 | 2 | 0.4415 | 0.7138 | 0.7338 | 0.7448 | +0.0111 | TabICL |
+
+Summary over seeds:
+
+| n_train | gbm mean | TabICL mean | gap mean | gap min | gap max | TabICL wins |
+|---:|---:|---:|---:|---:|---:|:--:|
+| 250 | 0.6490 | 0.6918 | +0.0428 | +0.0268 | +0.0586 | 3/3 |
+| 1,000 | 0.6995 | 0.7362 | +0.0368 | +0.0327 | +0.0405 | 3/3 |
+| 4,000 | 0.7353 | 0.7537 | +0.0184 | +0.0111 | +0.0237 | 3/3 |
+
+Wall-clock: **10 m 11 s**.
+
+**The ranking holds. TabICL won 9 out of 9**, and the gap never once crossed
+zero. The consistency of the *sign* is the real evidence here, more than any
+single margin.
+
+It also sharpens the size story. Averaged over seeds the gap shrinks
+monotonically — **+0.043 → +0.037 → +0.018** as context grows from 250 to 4,000
+— which is the book's claim behaving as advertised, and it was partly obscured
+on `seed=0` alone (where 1,000 rows happened to show a wider gap than 500).
+
+Two honest qualifications:
+
+* **At 4,000 rows the margin is getting close to the noise floor.** The
+  narrowest single result is +0.0111 (seed 2), and on a 4,000-row test set a
+  PR-AUC difference of ~0.01 is around the size of the sampling error. What
+  carries the conclusion at this size is that all three seeds agree in
+  direction, not the magnitude of any one of them.
+* **Three seeds is enough to kill a coin-flip, not to put an error bar on the
+  gap.** If you need a publishable interval rather than a ranking, this wants
+  more seeds and ideally repeated grouped cross-validation.
+
+One incidental finding about the baselines: on `seed=0` gradient boosting led
+logistic regression at 4,000 rows by only +0.0036 (0.7348 vs 0.7312), close
+enough to call a tie. Across three seeds it leads in all three, by +0.0121 on
+average (0.7353 vs 0.7232), so the near-tie was a feature of that one split.
+The 2,000-row cell where logistic actually *beat* gbm (0.7418 vs 0.7306) was not
+re-run across seeds, so it stands untested.
+
+TabICL's own `random_state` is left at its default of 42 throughout, so this
+varies the data split only, not the model's internal sampling.
+
+## 4. fit() versus predict(): the cost
 
 This is the part worth internalising. Same splits, TabICL against gradient
 boosting, seconds:
@@ -131,6 +190,11 @@ boosting, seconds:
 | 1,000 | 0.32 | 0.017 | 0.71 | 50.56 | 2,926x |
 | 2,000 | 0.36 | 0.017 | 0.67 | 66.13 | 3,820x |
 | 4,000 | 0.42 | 0.017 | 0.76 | 96.58 | 5,662x |
+
+The three-seed run reproduces this independently: TabICL `fit` stayed in
+0.62–0.82 s at every size, while `predict` moved with the context only —
+37.8–40.1 s at 250 rows, 50.3–51.2 s at 1,000, 96.0–98.2 s at 4,000. The
+pattern is a property of the method, not of one split.
 
 The inversion the book describes is real and it is extreme:
 
@@ -279,9 +343,21 @@ python -m venv .venv
 In a cloud session, the environment needs `cas-server.xethub.hf.co` and
 `us.aws.cdn.hf.co` allowed in addition to the hosts `01-setup.md` lists.
 
-The timings in section 3 come from a short script calling `tabfm_bench.run_gbm`
-and `run_tabicl` directly across the sweep sizes; `--sweep` itself prints only
-PR-AUC.
+For the seed check in section 3, vary `--seed` over 0, 1 and 2 at each
+`--n-train`:
 
-Budget roughly 9 minutes of CPU for all of the above, and expect TabPFN to be
+```bash
+for s in 0 1 2; do
+  for n in 250 1000 4000; do
+    .venv/bin/python tabfm/30-oulad.py --n-train $n --n-test 4000 --seed $s
+  done
+done
+```
+
+The per-size timings in section 4, and the compact seed tables in section 3,
+come from short scripts calling `tabfm_bench.run_gbm` and `run_tabicl` directly;
+`--sweep` itself prints only PR-AUC, and the harness prints no cross-seed
+summary.
+
+Budget roughly 20 minutes of CPU for everything above, and expect TabPFN to be
 absent from every table unless you hold a Prior Labs `TABPFN_TOKEN`.

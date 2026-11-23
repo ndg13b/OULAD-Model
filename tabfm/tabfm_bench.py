@@ -101,6 +101,61 @@ class Dataset:
 # Data
 # ---------------------------------------------------------------------------
 
+# Built feature frames, keyed by (cutoff_day, data_dir). Reading the 10.6M-row
+# clickstream and rebuilding features costs several seconds even on a fast
+# disk, and a sweep asks for the same cutoff repeatedly, so it is cached.
+_FEATURE_CACHE: dict[tuple[int, str], pd.DataFrame] = {}
+
+
+def prepare_oulad(
+    cutoff_day: int = 28,
+    *,
+    data_dir: Path | None = None,
+    verbose: bool = True,
+) -> pd.DataFrame:
+    """Load and featurise OULAD once, then hand back the cached frame.
+
+    Call it explicitly before a sweep if you want the one-off cost to happen
+    somewhere visible rather than inside the first iteration. ``sample_oulad``
+    calls it for you.
+
+    Use ``clear_cache()`` if the underlying parquet files change.
+    """
+    key = (cutoff_day, str(data_dir) if data_dir else "default")
+    if key in _FEATURE_CACHE:
+        return _FEATURE_CACHE[key]
+
+    import contextlib
+    import io
+    import time
+
+    from oulad import features, load
+
+    if verbose:
+        print(f"Loading OULAD and building features at cutoff day {cutoff_day} "
+              "(one-off; ~10.6M clickstream rows) ...", flush=True)
+
+    t0 = time.perf_counter()
+    # build_labels prints a data-quirk note on every call; say it once, here.
+    with contextlib.redirect_stdout(io.StringIO()):
+        tables = load.load_all(data_dir=data_dir, verbose=False)
+        frame = features.build_features(tables, cutoff_day)
+    elapsed = time.perf_counter() - t0
+
+    if verbose:
+        print(f"  ready: {len(frame):,} enrolments x "
+              f"{len(features.feature_columns(frame))} features "
+              f"({elapsed:.1f} s). Cached — later calls are instant.", flush=True)
+
+    _FEATURE_CACHE[key] = frame
+    return frame
+
+
+def clear_cache() -> None:
+    """Drop cached feature frames."""
+    _FEATURE_CACHE.clear()
+
+
 def sample_oulad(
     n_train: int = 4000,
     n_test: int = 4000,
@@ -123,17 +178,15 @@ def sample_oulad(
 
     The split is made with ``GroupShuffleSplit`` on ``id_student`` *first*, and
     only then subsampled, so no student can appear on both sides.
+
+    The expensive part -- reading 10.6M clickstream rows and building 45
+    features from them -- is cached per ``(cutoff_day, data_dir)``. A size sweep
+    calls this nine times with the same cutoff; without the cache that is nine
+    full rebuilds, which on a slow disk looks exactly like a hung notebook.
     """
-    from oulad import features, load
+    frame = prepare_oulad(cutoff_day, data_dir=data_dir)
 
-    # build_labels prints a data-quirk note on every call; in a sweep that is
-    # the same line five times. Say it once, via the caller, not here.
-    import contextlib
-    import io
-
-    with contextlib.redirect_stdout(io.StringIO()):
-        tables = load.load_all(data_dir=data_dir, verbose=False)
-        frame = features.build_features(tables, cutoff_day)
+    from oulad import features
 
     cols = features.feature_columns(frame)
     X = frame[cols].copy()

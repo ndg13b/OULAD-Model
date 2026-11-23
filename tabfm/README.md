@@ -85,6 +85,7 @@ comparing precisely because it makes different trade-offs.
 | [`30-oulad.py`](30-oulad.py) | Against the gradient boosting baseline (defaults) on 45 real features |
 | [`tabfm_bench.py`](tabfm_bench.py) | The shared harness: grouped splits, the baselines, the comparison table |
 | [`40-kaggle-gpu.ipynb`](40-kaggle-gpu.ipynb) | **Free GPU on Kaggle**: what CUDA is, measured; the full-size sweep a CPU cannot run; OpenML small-data comparison |
+| [`RESULTS-GPU.md`](RESULTS-GPU.md) | **The crossover answered.** Full-size sweep on a T4: gradient boosting never catches up |
 | [`RESULTS.md`](RESULTS.md) | Measured numbers from an actual run, and what `01-setup.md` gets wrong |
 
 The three numbered scripts are plain Python, not notebooks — run them, read the
